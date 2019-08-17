@@ -13,29 +13,34 @@
 #ifndef TINTIN_REPORTER_HPP
 #define TINTIN_REPORTER_HPP
 
-#include <string>
 #include <iostream>
 #include <fstream>
 
+// "var/log/matt_daemon/matt_daemon.log"
+
+#define LOG_FILE_PATH "./matt_daemon.log"
+
 #define EXE_NAME "Matt_daemon: "
 
-enum eLogType {
+enum eLogType 
+{
     INFO,
     WARNING,
     ERROR,
     LOG_TYPE_COUNT,
 };
 
-class Tintin_reporter {
+class Tintin_reporter 
+{
 
     public:
 
     Tintin_reporter(std::string iPath);
 
-    Tintin_reporter();                                          // Canonical
-    Tintin_reporter(Tintin_reporter const &iCopy);              // Canonical
-    ~Tintin_reporter();                                         // Canonical
-    Tintin_reporter &operator=(Tintin_reporter const &iCopy);   // Canonical
+    Tintin_reporter();                                          // Coplien, Canonical
+    Tintin_reporter(Tintin_reporter const &iCopy);              // Coplien, Canonical
+    ~Tintin_reporter();                                         // Coplien, Canonical
+    Tintin_reporter &operator=(Tintin_reporter const &iCopy);   // Coplien, Canonical
 
     void Log(eLogType iLogType, std::string iMessage);
 

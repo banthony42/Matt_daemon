@@ -6,7 +6,7 @@
 #    By: banthony <banthony@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2019/08/17 11:57:23 by banthony          #+#    #+#              #
-#    Updated: 2019/08/17 13:25:07 by banthony         ###   ########.fr        #
+#    Updated: 2019/08/17 17:46:55 by banthony         ###   ########.fr        #
 #                                                                              #
 #******************************************************************************#
 
@@ -17,6 +17,7 @@ DIROBJ		= ./
 
 SRC			+=	main.cpp
 SRC			+=	Tintin_reporter.cpp
+SRC			+=	Daemon.cpp
 
 OBJ			=	$(SRC:.cpp=.o)
 OBJS		=	$(OBJ:%=$(DIROBJ)%)

@@ -12,6 +12,7 @@
 
 #include "Tintin_reporter.hpp"
 #include <sstream>
+#include <iostream>
 
 static const std::string sLogType[LOG_TYPE_COUNT] = {
     [INFO] =    "INFO",
@@ -26,7 +27,6 @@ static const std::string sLogType[LOG_TYPE_COUNT] = {
 Tintin_reporter::Tintin_reporter()
 {
     _FileLogExist = false;
-    return ;
 }
 
 Tintin_reporter::Tintin_reporter(Tintin_reporter const &iCopy)
