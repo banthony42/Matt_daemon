@@ -16,9 +16,9 @@
 #include <iostream>
 #include <fstream>
 
-// "var/log/matt_daemon/matt_daemon.log"
+#define LOG_FILE_DIR "/var/log/matt_daemon"
 
-#define LOG_FILE_PATH "./matt_daemon.log"
+#define LOG_FILE_PATH "/var/log/matt_daemon/matt_daemon.log"
 
 #define EXE_NAME "Matt_daemon: "
 

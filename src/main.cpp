@@ -64,23 +64,34 @@
 
 #include "Tintin_reporter.hpp"
 #include "Daemon.hpp"
+#include "Server.hpp"
+#include <unistd.h>
 
 int main()
 {
-    Tintin_reporter lConsole = Tintin_reporter();
-    Tintin_reporter lMattDaemonSys = Tintin_reporter(LOG_FILE_PATH);
-
-    lConsole.Log(INFO, "Process Started.");
-
-    lMattDaemonSys.Log(INFO, "Daemon Starting ...");
-
+    // Transform this process into a daemon, running at ./
     Daemon lDaemonizer;
     lDaemonizer.Daemonize("./");
 
-//    TODO - Cause issue
-//    lMattDaemonSys = Tintin_reporter(LOG_FILE_PATH);
+    Tintin_reporter lMattDaemonSys = Tintin_reporter(LOG_FILE_PATH);
     lMattDaemonSys.Log(INFO, "Daemon Started.");
 
+    // Open 4242 with 3 connection max
+    Server *DaemonServer = new Server();
+
+    // Main daemon server stay here and fork when receive new client connection.
+    while(!DaemonServer->WaitClient())
+        ;
+
+    // All connected client continue here
     while(42) {
+        if (!DaemonServer->CommandInterpreter())
+            break;
     }
+
+    delete DaemonServer;
+    lMattDaemonSys.Log(INFO, "Daemon ends with quit command.");
+    lDaemonizer.~Daemon();
+
+    return (EXIT_SUCCESS);
 }

@@ -13,11 +13,17 @@
 #ifndef DAEMON_HPP
 #define DAEMON_HPP
 
-#include <iostream>
+#include <stdlib.h>
 
-// "/var/lock/matt_daemon.lock"
+#if __linux__
+
+#define FILE_LOCK_PATH "/var/lock/matt_daemon.lock"
+
+#elif __APPLE__
 
 #define FILE_LOCK_PATH "./matt_daemon.lock"
+
+#endif
 
 class Daemon
 {
@@ -29,12 +35,12 @@ class Daemon
     Daemon &operator=(Daemon &iCopy);   // Coplien, Canonical
 
     void Daemonize(std::string iDaemonPath);
+    static void KillDaemon();
 
     private:
 
     void ForkAndKillParent();
     void CloseAllFileDescriptor();
-    bool FileExist(const std::string &iPath);
     void LockDaemon();
 };
 

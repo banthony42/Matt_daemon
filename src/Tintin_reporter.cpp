@@ -10,9 +10,13 @@
 //                                                                            //
 // ************************************************************************** //
 
+#include "Utils.hpp"
 #include "Tintin_reporter.hpp"
 #include <sstream>
 #include <iostream>
+#include <ctime>
+#include <sys/stat.h>
+#include <stdlib.h>
 
 static const std::string sLogType[LOG_TYPE_COUNT] = {
     [INFO] =    "INFO",
@@ -61,10 +65,17 @@ Tintin_reporter &Tintin_reporter::operator=(Tintin_reporter const &iCopy)
 */
 Tintin_reporter::Tintin_reporter(std::string iPath)
 {
+    if (!Utils::FileExist(LOG_FILE_DIR)) {
+        if(mkdir(LOG_FILE_DIR, 0700) < 0) {
+            perror("Matt_daemon directory creation:");
+            exit(EXIT_FAILURE);
+        }
+    }
     try {
-        _FileLog.open(iPath, std::ofstream::out | std::ofstream::app);
+        _FileLog.open(iPath.c_str(), std::ofstream::out | std::ofstream::app);
     }
     catch(std::exception const &iException) {
+            std::cout << "TEST64\n";
         std::cerr << "[Tintin_reporter]: " << iException.what() << std::endl;
     }
     _FileLogExist = true;
