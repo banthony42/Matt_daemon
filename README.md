@@ -4,8 +4,9 @@ Daemon basique, qui ouvre un port puis traite et stock les messages reçus.
 ### To do
 * Programm should run only with root access.
 
-* Listen on 4242 and write message in log file.
+* Handle all signal, and find out why some can't be caught by a forked process.
 
-* Handle quit command on 4242.
 
-* Handle all signal.
+### Bug
+* Quitting as a client, using terminal shortcut for signal (SIGINT, SIGQUIT)
+  cause the file lock to be deleted.
