@@ -18,11 +18,26 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 
+Tintin_reporter *Tintin_reporter::_Instance = NULL;
+
 static const std::string sLogType[LOG_TYPE_COUNT] = {
     [INFO] =    "INFO",
     [WARNING] = "WARNING",
     [ERROR] =   "ERROR",
 };
+
+Tintin_reporter *Tintin_reporter::GetInstance() {
+	if (!Tintin_reporter::_Instance)
+		Tintin_reporter::_Instance = new Tintin_reporter(LOG_FILE_PATH);
+	return Tintin_reporter::_Instance;
+}
+
+void  Tintin_reporter::DeleteInstance() {
+	if (Tintin_reporter::_Instance) {
+        delete Tintin_reporter::_Instance;
+        Tintin_reporter::_Instance = NULL;
+    }
+}
 
 /*
 **  Default constructor will not create log file, 

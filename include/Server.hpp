@@ -22,15 +22,31 @@ class Server
 
     Server();                           // Coplien, Canonical
     Server(Server &iCopy);              // Coplien, Canonical
-    ~Server();
+    ~Server();                          // Coplien, Canonical
     Server &operator=(Server &iCopy);   // Coplien, Canonical
 
     bool WaitClient();
-    bool CommandInterpreter();
+    bool ClientCommandInterpreter();
+    bool IsServerSide();
     
+  	class ServerException : public std::exception {
+
+    	public:
+	    	ServerException();                              // Coplien, Canonical  
+		    ServerException(std::string iMessage);
+    		ServerException(ServerException const &iCopy);  // Coplien, Canonical
+	    	virtual ~ServerException() throw();             // Coplien, Canonical
+		    virtual const char *what() const throw();
+
+    	private:
+	    	std::string const _errorMessage;
+		    ServerException operator=(ServerException const &iCopy);    // Coplien, Canonical
+	};
+
     private:
 
+    bool            _IsServerSide;
     int             _sock;
     int             _client_sock;
-    Tintin_reporter _ServerLog;
+    Tintin_reporter *_ServerLog;
 };

@@ -17,6 +17,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/file.h>
+#include <sys/wait.h>
 #include <csignal>
 
 static void SignalHandler(int iSignal);
@@ -50,14 +51,12 @@ Daemon &Daemon::operator=(Daemon &iCopy)
 */
 void Daemon::Daemonize(std::string iDaemonPath)
 {
-    Tintin_reporter lMattDaemonLog = Tintin_reporter(LOG_FILE_PATH);
-    lMattDaemonLog.Log(INFO, "Daemon is starting ...");
+    Tintin_reporter *lMattDaemonLog = Tintin_reporter::GetInstance();
+    lMattDaemonLog->Log(INFO, "===================== Daemon is starting ... =====================");
 
     // STEP 7 (Check if a daemon is already running)
     if (Utils::FileExist(FILE_LOCK_PATH)) {
-        Tintin_reporter lConsole = Tintin_reporter();
-        lConsole.Log(ERROR, "Trying to create daemon that already running.");
-        lConsole.~Tintin_reporter();
+        std::cerr << "Trying to create daemon that already running." << std::endl;
         exit(EXIT_FAILURE);
     }
 
@@ -66,8 +65,7 @@ void Daemon::Daemonize(std::string iDaemonPath)
 
     // STEP 2
     if (setsid() < 0) {
-        lMattDaemonLog.Log(ERROR, "An error occured while creating new session.");
-        lMattDaemonLog.~Tintin_reporter();
+        lMattDaemonLog->Log(ERROR, "An error occured while creating new session.");
         exit(EXIT_FAILURE);
     }
 
@@ -82,8 +80,7 @@ void Daemon::Daemonize(std::string iDaemonPath)
 
     // STEP 6
     if (chdir(iDaemonPath.c_str()) < 0) {
-        lMattDaemonLog.Log(ERROR, "An error occured while changing directory.");
-        lMattDaemonLog.~Tintin_reporter();
+        lMattDaemonLog->Log(ERROR, "An error occured while changing directory.");
         exit(EXIT_FAILURE);
     }
 
@@ -92,19 +89,44 @@ void Daemon::Daemonize(std::string iDaemonPath)
 
     // STEP 8
     std::signal(SIGTERM, SignalHandler);
+    std::signal(SIGINT, SignalHandler);
+    std::signal(SIGQUIT, SignalHandler);
+    std::signal(SIGKILL, SignalHandler);
+    std::signal(SIGCHLD,SignalHandler);
 }
 
 static void SignalHandler(int iSignal)
 {
-    Tintin_reporter lMattDaemonLog = Tintin_reporter(LOG_FILE_PATH);
+    Tintin_reporter *lMattDaemonLog = Tintin_reporter::GetInstance();
 
     switch (iSignal)
     {
         case SIGTERM:
-        lMattDaemonLog.Log(INFO, "SIGTERM has been caught !");
+        lMattDaemonLog->Log(INFO, "SIGTERM has been caught !");
         Daemon::KillDaemon();
         break;
         
+        case SIGINT:
+        lMattDaemonLog->Log(INFO, "SIGINT has been caught !");
+        Daemon::KillDaemon();
+        break;
+
+        case SIGQUIT:
+        lMattDaemonLog->Log(INFO, "SIGQUIT has been caught !");
+        Daemon::KillDaemon();
+        break;
+
+        case SIGKILL:
+        lMattDaemonLog->Log(INFO, "SIGKILL has been caught !");
+        Daemon::KillDaemon();
+        break;
+
+        case SIGCHLD:
+        lMattDaemonLog->Log(INFO, "SIGCHLD has been caught ! A client is left !");
+        // Wait for any child process
+        wait(NULL);
+        break;
+
         default:
         break;
     }
@@ -112,30 +134,27 @@ static void SignalHandler(int iSignal)
 
 void Daemon::KillDaemon()
 {
+    Tintin_reporter *lMattDaemonLog = Tintin_reporter::GetInstance();
     if (std::remove(FILE_LOCK_PATH)) {
-        Tintin_reporter lMattDaemonLog = Tintin_reporter(LOG_FILE_PATH);
-        lMattDaemonLog.Log(ERROR, "Error when deleting file lock.");
-        lMattDaemonLog.~Tintin_reporter();
+        lMattDaemonLog->Log(ERROR, "Error when deleting file lock.");
         exit(EXIT_FAILURE);
     }
+    lMattDaemonLog->Log(INFO, "Daemon stopped.");
     exit(EXIT_SUCCESS);
 }
 
 void Daemon::LockDaemon()
 {
     int lFd;
+    Tintin_reporter *lMattDaemonLog = Tintin_reporter::GetInstance();
 
     if ((lFd = open(FILE_LOCK_PATH, O_RDWR | O_CREAT, 740)) < 0) {
-        Tintin_reporter lMattDaemonLog = Tintin_reporter(LOG_FILE_PATH);
-        lMattDaemonLog.Log(ERROR, "Error when creating file lock.");
-        lMattDaemonLog.~Tintin_reporter();
+        lMattDaemonLog->Log(ERROR, "Error when creating file lock.");
         exit(EXIT_FAILURE);
     }
 
     if (flock(lFd, LOCK_EX | LOCK_NB) < 0) {
-        Tintin_reporter lMattDaemonLog = Tintin_reporter(LOG_FILE_PATH);
-        lMattDaemonLog.Log(ERROR, "Error while locking the mutex file.");
-        lMattDaemonLog.~Tintin_reporter();
+        lMattDaemonLog->Log(ERROR, "Error while locking the mutex file.");
         Daemon::KillDaemon();
         exit(EXIT_FAILURE);
     }
@@ -148,9 +167,8 @@ void Daemon::ForkAndKillParent()
     lChildProcess = fork();
 
     if (lChildProcess < 0) {
-        Tintin_reporter lMattDaemonLog = Tintin_reporter(LOG_FILE_PATH);
-        lMattDaemonLog.Log(ERROR, "An error occured during the fork.");
-        lMattDaemonLog.~Tintin_reporter();
+        Tintin_reporter *lMattDaemonLog = Tintin_reporter::GetInstance();
+        lMattDaemonLog->Log(ERROR, "An error occured during the fork.");
         exit(EXIT_FAILURE);
     }
     // Kill the parent
@@ -164,32 +182,30 @@ void Daemon::CloseAllFileDescriptor()
     int lNumberOfFileDescriptor = getdtablesize();
     int lFd = 2;
 
+    Tintin_reporter *lMattDaemonLog = Tintin_reporter::GetInstance();
+
     while (++lFd < lNumberOfFileDescriptor)
         close(lFd);
 
-    Tintin_reporter lMattDaemonLog = Tintin_reporter(LOG_FILE_PATH);
-    lMattDaemonLog.Log(INFO, "All file descriptors has been closed.");
+    // File descriptor has been close so delete old instance and create new one.
+    Tintin_reporter::DeleteInstance();
+    lMattDaemonLog = Tintin_reporter::GetInstance();
 
     // To avoid error with function that read or write on standard I/O
     // We re-open and redirect them to /dev/null
 
     if (open("/dev/null", O_RDONLY) < 0) {    // fd 0 - STDOUT
-        lMattDaemonLog.Log(ERROR, "An error occured during STDOUT redirection.");
-        lMattDaemonLog.~Tintin_reporter();
+        lMattDaemonLog->Log(ERROR, "An error occured during STDOUT redirection.");
         exit(EXIT_FAILURE);
     }
 
     if (open("/dev/null", O_RDWR) < 0) {      // fd 1 - STDIN
-        lMattDaemonLog.Log(ERROR, "An error occured during STDIN redirection.");
-        lMattDaemonLog.~Tintin_reporter();
+        lMattDaemonLog->Log(ERROR, "An error occured during STDIN redirection.");
         exit(EXIT_FAILURE);
         }
 
     if (open("/dev/null", O_RDWR) < 0) {      // fd 2 - STDERR
-        lMattDaemonLog.Log(ERROR, "An error occured during STDERR redirection.");
-        lMattDaemonLog.~Tintin_reporter();
+        lMattDaemonLog->Log(ERROR, "An error occured during STDERR redirection.");
         exit(EXIT_FAILURE);
         }
-
-    lMattDaemonLog.~Tintin_reporter();
 }

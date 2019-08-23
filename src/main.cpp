@@ -73,25 +73,43 @@ int main()
     Daemon lDaemonizer;
     lDaemonizer.Daemonize("./");
 
-    Tintin_reporter lMattDaemonSys = Tintin_reporter(LOG_FILE_PATH);
-    lMattDaemonSys.Log(INFO, "Daemon Started.");
+    Tintin_reporter *lMattDaemonSys = Tintin_reporter::GetInstance();
+    lMattDaemonSys->Log(INFO, "Daemon Started.");
+    
+    Server *DaemonServer = NULL;
+    try {
 
-    // Open 4242 with 3 connection max
-    Server *DaemonServer = new Server();
+        // Open 4242 with 3 connection max, server can throw if it doesn't start
+        if (!(DaemonServer = new Server())) {
+            lMattDaemonSys->Log(INFO, "Error during allocation.");
+            return (EXIT_FAILURE);
+        }
 
-    // Main daemon server stay here and fork when receive new client connection.
-    while(!DaemonServer->WaitClient())
-        ;
+        // Main daemon server stay here and fork when receive new client connection.
+        while(!DaemonServer->WaitClient())
+            ;
 
-    // All connected client continue here
-    while(42) {
-        if (!DaemonServer->CommandInterpreter())
-            break;
+        lMattDaemonSys->Log(INFO, "New client continue in command interpreter.");
+
+        // All connected client continue here
+        while(42) {
+            if (!DaemonServer->ClientCommandInterpreter())
+                break;
+        }
+
+        lMattDaemonSys->Log(INFO, "Daemon & Server will stop.");
+
+        if (DaemonServer->IsServerSide()) {
+            lDaemonizer.~Daemon();
+        }
+        delete DaemonServer;
     }
-
-    delete DaemonServer;
-    lMattDaemonSys.Log(INFO, "Daemon ends with quit command.");
-    lDaemonizer.~Daemon();
+    catch (std::exception const &lServerException) {
+        lMattDaemonSys->Log(INFO, lServerException.what());
+        if (!DaemonServer || DaemonServer->IsServerSide())
+            lDaemonizer.~Daemon();
+        return (EXIT_FAILURE);
+    }
 
     return (EXIT_SUCCESS);
 }

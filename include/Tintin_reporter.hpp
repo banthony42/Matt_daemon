@@ -35,19 +35,24 @@ class Tintin_reporter
 
     public:
 
+    static Tintin_reporter *GetInstance();
+    static void DeleteInstance();
+
+    void Log(eLogType iLogType, std::string iMessage);
+
+    private:
+
+    static Tintin_reporter *_Instance;
+    bool            _FileLogExist;
+    std::ofstream   _FileLog;
+
+
     Tintin_reporter(std::string iPath);
 
     Tintin_reporter();                                          // Coplien, Canonical
     Tintin_reporter(Tintin_reporter const &iCopy);              // Coplien, Canonical
     ~Tintin_reporter();                                         // Coplien, Canonical
     Tintin_reporter &operator=(Tintin_reporter const &iCopy);   // Coplien, Canonical
-
-    void Log(eLogType iLogType, std::string iMessage);
-
-    private:
-
-    bool            _FileLogExist;
-    std::ofstream   _FileLog;
 };
 
 #endif
